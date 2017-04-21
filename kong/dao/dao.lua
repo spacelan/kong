@@ -273,10 +273,6 @@ function DAO:update(tbl, filter_keys, options)
   end
 
   local model = self.model_mt(tbl)
-  local ok, err = model:validate {dao = self, update = true, full_update = options.full}
-  if not ok then
-    return ret_error(self.db.name, nil, err)
-  end
 
   local primary_keys, values, nils, err = model:extract_keys()
   if err then
@@ -286,7 +282,19 @@ function DAO:update(tbl, filter_keys, options)
   local old, err = self.db:find(self.table, self.schema, primary_keys)
   if err then
     return ret_error(self.db.name, nil, err)
-  elseif old == nil then
+  end
+
+  local ok, err = model:validate {
+    dao         = self,
+    update      = true,
+    full_update = options.full,
+    old_t       = old,
+  }
+  if not ok then
+    return ret_error(self.db.name, nil, err)
+  end
+
+  if old == nil then
     return
   end
 

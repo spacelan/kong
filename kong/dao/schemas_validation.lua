@@ -125,7 +125,7 @@ function _M.validate_entity(tbl, schema, options)
         end
 
         -- [IMMUTABLE] check immutability of a field if updating
-        if v.immutable and options.update and (t[column] ~= nil and options.old_t[column] ~= nil and t[column] ~= options.old_t[column]) and not v.required then
+        if v.immutable and options.update and (t[column] ~= nil and options.old_t[column] ~= nil and t[column] ~= options.old_t[column]) then
           errors = utils.add_error(errors, error_prefix..column, column.." cannot be updated")
         end
 
