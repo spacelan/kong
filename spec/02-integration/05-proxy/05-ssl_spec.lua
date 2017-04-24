@@ -167,7 +167,7 @@ describe("SSL", function()
     local https_client_sni
 
     before_each(function()
-      assert(helpers.kong_exec("reload --conf " .. helpers.test_conf_path ..
+      assert(helpers.kong_exec("restart --conf " .. helpers.test_conf_path ..
                                " --nginx-conf spec/fixtures/custom_nginx.template"))
 
       https_client_sni = helpers.proxy_ssl_client()
