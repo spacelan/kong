@@ -1,18 +1,40 @@
 set -e
+OPENSSL=1.0.2j
+PCRE=8.39
+ZLIB=1.2.11
+OPENRESTY=1.11.2.1
+LUAROCKS=2.4.2
+SERF=0.8.1
+DOWNLOAD_CACHE=/home/spacelan1993/DOWNLOAD_CACHE
+INSTALL_CACHE=/home/spacelan1993/INSTALL_CACHE
 
 #---------
 # Download
 #---------
 OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL
+PCRE_DOWNLOAD=$DOWNLOAD_CACHE/pcre-$PCRE
+ZLIB_DOWNLOAD=$DOWNLOAD_CACHE/zlib-$ZLIB
 OPENRESTY_DOWNLOAD=$DOWNLOAD_CACHE/openresty-$OPENRESTY
 LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS
 SERF_DOWNLOAD=$DOWNLOAD_CACHE/serf-$SERF
 
-mkdir -p $OPENSSL_DOWNLOAD $OPENRESTY_DOWNLOAD $LUAROCKS_DOWNLOAD $SERF_DOWNLOAD
+mkdir -p $OPENSSL_DOWNLOAD $PCRE_DOWNLOAD $ZLIB_DOWNLOAD $OPENRESTY_DOWNLOAD $LUAROCKS_DOWNLOAD $SERF_DOWNLOAD
 
 if [ ! "$(ls -A $OPENSSL_DOWNLOAD)" ]; then
   pushd $DOWNLOAD_CACHE
     curl -L http://www.openssl.org/source/openssl-$OPENSSL.tar.gz | tar xz
+  popd
+fi
+
+if [ ! "$(ls -A $PCRE_DOWNLOAD)" ]; then
+  pushd $DOWNLOAD_CACHE
+    curl -L ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$PCRE.tar.gz | tar xz
+  popd
+fi
+
+if [ ! "$(ls -A $ZLIB_DOWNLOAD)" ]; then
+  pushd $DOWNLOAD_CACHE
+    curl -L http://zlib.net/zlib-$ZLIB.tar.gz | tar xz
   popd
 fi
 
@@ -51,10 +73,20 @@ if [ ! "$(ls -A $OPENSSL_INSTALL)" ]; then
   popd
 fi
 
+#if [ ! "$(ls -A $PCRE_INSTALL)" ]; then
+#  pushd $PCRE_DOWNLOAD
+#    ./configure shared --prefix=$PCRE_INSTALL
+#    make
+#    make install
+#  popd
+#fi
+
 if [ ! "$(ls -A $OPENRESTY_INSTALL)" ]; then
   OPENRESTY_OPTS=(
     "--prefix=$OPENRESTY_INSTALL"
     "--with-openssl=$OPENSSL_DOWNLOAD"
+    "--with-pcre=$PCRE_DOWNLOAD"
+    "--with-zlib=$ZLIB_DOWNLOAD"
     "--with-ipv6"
     "--with-pcre-jit"
     "--with-http_ssl_module"
@@ -94,18 +126,18 @@ export OPENSSL_DIR=$OPENSSL_INSTALL # for LuaSec install
 export SERF_PATH=$SERF_INSTALL/serf # for our test instance (not in default bin/sh $PATH)
 
 export PATH=$PATH:$OPENRESTY_INSTALL/nginx/sbin:$OPENRESTY_INSTALL/bin:$LUAROCKS_INSTALL/bin:$SERF_INSTALL
-
+echo $PATH
 eval `luarocks path`
 
 # -------------------------------------
 # Install ccm & setup Cassandra cluster
 # -------------------------------------
-if [[ "$TEST_SUITE" != "unit" ]] && [[ "$TEST_SUITE" != "lint" ]]; then
-  pip install --user PyYAML six ccm
-  ccm create test -v $CASSANDRA -n 1 -d
-  ccm start -v
-  ccm status
-fi
+#if [[ "$TEST_SUITE" != "unit" ]] && [[ "$TEST_SUITE" != "lint" ]]; then
+#  pip install --user PyYAML six ccm
+#  ccm create test -v $CASSANDRA -n 1 -d
+#  ccm start -v
+#  ccm status
+#fi
 
 nginx -V
 resty -V
